@@ -9,30 +9,9 @@ import { AppButton } from '../components/AppButton';
 import { useTheme } from '../theme/ThemeProvider';
 import { useRecordStore } from '../store/recordStore';
 import { useAuthStore } from '../store/authStore';
+import { useRecordsStore } from '../store/recordsStore';
 import { submitRecord } from '../api/client';
-import type { PartnerObservationKey, SleepPosition, SymptomKey } from '../types/domain';
-
-const SYMPTOMS: { key: SymptomKey; label: string }[] = [
-  { key: 'dor_de_cabeca', label: 'Dor de cabeça' },
-  { key: 'boca_seca', label: 'Boca seca' },
-  { key: 'cansaco', label: 'Cansaço' },
-  { key: 'sono_nao_reparador', label: 'Sono não reparador' },
-  { key: 'sonolencia_diurna', label: 'Sonolência durante o dia' },
-];
-
-const PARTNER_OBSERVATIONS: { key: PartnerObservationKey; label: string }[] = [
-  { key: 'ronco', label: 'Ronco' },
-  { key: 'pausas_respiratorias', label: 'Pausas na respiração' },
-  { key: 'engasgos', label: 'Engasgos' },
-  { key: 'respiracao_irregular', label: 'Respiração irregular' },
-];
-
-const SLEEP_POSITIONS: { key: SleepPosition; label: string }[] = [
-  { key: 'costas', label: 'De costas' },
-  { key: 'lado', label: 'De lado' },
-  { key: 'barriga', label: 'De barriga' },
-  { key: 'variou', label: 'Variou' },
-];
+import { PARTNER_OBSERVATIONS, SLEEP_POSITIONS, SYMPTOMS } from '../data/recordLabels';
 
 const SECTIONS = ['Sintomas', 'Parceiro(a)', 'Hábitos', 'CPAP'] as const;
 type Section = (typeof SECTIONS)[number];
@@ -52,6 +31,7 @@ export function RecordScreen() {
     reset,
   } = useRecordStore();
   const token = useAuthStore((s) => s.token);
+  const fetchRecords = useRecordsStore((s) => s.fetchRecords);
   const [saving, setSaving] = useState(false);
 
   return (
@@ -165,6 +145,7 @@ export function RecordScreen() {
           setSaving(true);
           try {
             await submitRecord(draft, token);
+            await fetchRecords(token);
             Alert.alert('Registro salvo', 'Seus dados foram enviados para o servidor.');
             reset();
           } catch (err) {

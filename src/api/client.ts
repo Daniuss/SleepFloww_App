@@ -1,4 +1,4 @@
-import type { ManualRecord, Night } from '../types/domain';
+import type { ManualRecord, Night, StoredManualRecord } from '../types/domain';
 import { API_BASE_URL } from './config';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -46,5 +46,11 @@ export function submitRecord(record: ManualRecord, token: string) {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
     body: JSON.stringify(record),
+  });
+}
+
+export function fetchRecords(token: string) {
+  return request<StoredManualRecord[]>('/records', {
+    headers: { Authorization: `Bearer ${token}` },
   });
 }

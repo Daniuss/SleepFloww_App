@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { login } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import { useNightsStore } from '../store/nightsStore';
+import { useRecordsStore } from '../store/recordsStore';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -22,6 +23,7 @@ export function LoginScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const setSession = useAuthStore((s) => s.setSession);
   const fetchNights = useNightsStore((s) => s.fetchNights);
+  const fetchRecords = useRecordsStore((s) => s.fetchRecords);
 
   const canSubmit = email.trim().length > 3 && password.length >= 4;
 
@@ -31,7 +33,7 @@ export function LoginScreen({ navigation }: Props) {
     try {
       const { token, email: sessionEmail } = await login(email.trim(), password);
       setSession(token, sessionEmail);
-      await fetchNights(token);
+      await Promise.all([fetchNights(token), fetchRecords(token)]);
       navigation.replace('Main');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao entrar');

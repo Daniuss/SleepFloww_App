@@ -40,3 +40,5 @@ export type ManualRecord = {
   cpapDurationHours: string;
   notes: string;
 };
+
+export type StoredManualRecord = ManualRecord & { id: string; createdAt: string };
