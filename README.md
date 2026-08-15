@@ -30,14 +30,18 @@ sleepflow/
 │   ├── components/            # Componentes de UI reutilizáveis (Card, AppButton, etc.)
 │   ├── data/mockNights.ts     # severityLabel() e dados de exemplo (não usados em produção)
 │   ├── navigation/            # RootNavigator (stack) + MainTabs (tabs)
+│   ├── data/recordLabels.ts   # Rótulos de sintomas/hábitos/posição de sono (usado por 2+ telas)
+│   ├── reports/nightsReport.ts # Gera o PDF do relatório de noites (expo-print + expo-sharing)
 │   ├── screens/
 │   │   ├── LoginScreen.tsx        # Autenticação (auto-cria conta no primeiro login)
 │   │   ├── HomeScreen.tsx         # Resumo da última noite
-│   │   ├── HistoryScreen.tsx      # Histórico de noites
+│   │   ├── HistoryScreen.tsx      # Histórico de noites + registros manuais
 │   │   ├── RecordScreen.tsx       # Registro manual de sintomas/hábitos
 │   │   ├── SleepSessionScreen.tsx # Gravação de áudio da noite
-│   │   └── ProfileScreen.tsx      # Conta / logout
-│   ├── store/                 # Zustand: authStore, nightsStore, recordStore
+│   │   ├── ProfileScreen.tsx      # Conta / exportar relatório / privacidade / logout
+│   │   ├── PrivacyPolicyScreen.tsx        # Texto informativo sobre uso de dados
+│   │   └── MicrophonePermissionScreen.tsx # Status da permissão + atalho pras configs do app
+│   ├── store/                 # Zustand: authStore, nightsStore, recordsStore, recordStore (rascunho)
 │   ├── theme/                 # Tokens de cor/tipografia + ThemeProvider
 │   └── types/domain.ts        # Tipos do domínio (Night, ManualRecord, etc.)
 └── server/
@@ -126,6 +130,19 @@ conforme o comportamento observado no uso real. O áudio bruto não é
 enviado nem armazenado; só o resumo calculado (`Night`) é enviado ao
 backend.
 
+## Relatório em PDF, privacidade e permissões
+
+Na aba Perfil:
+
+- **Exportar relatório**: gera um PDF (via `expo-print`) com o histórico de
+  noites gravadas e abre o menu de compartilhamento do sistema (`expo-sharing`)
+  — funciona no Expo Go, não precisa do dev client.
+- **Política de privacidade**: texto informativo (não é um documento jurídico)
+  explicando o que é gravado, o que é enviado ao servidor e onde os dados
+  ficam — ver [`src/screens/PrivacyPolicyScreen.tsx`](src/screens/PrivacyPolicyScreen.tsx).
+- **Permissões do microfone**: mostra o status atual da permissão e um atalho
+  pra abrir as configurações do app no Android (`Linking.openSettings()`).
+
 ## Backend — API
 
 Todas as rotas exceto `/health` e `/auth/login` exigem header
@@ -157,7 +174,6 @@ Todas as rotas exceto `/health` e `/auth/login` exigem header
   apagada". Gerenciadores de bateria agressivos (Xiaomi, Samsung etc.) podem
   matar o serviço mesmo assim — pode ser necessário desativar a otimização
   de bateria pro app manualmente.
-- Telas de "Exportar relatório", "Política de privacidade" e "Permissões do
-  microfone" no Perfil ainda são placeholders sem ação.
 - Backend acessível só na rede local — para uso fora de casa, precisa de
-  deploy em um servidor real (fora do escopo atual).
+  deploy em um servidor real (fora do escopo atual, decisão consciente por
+  enquanto).
