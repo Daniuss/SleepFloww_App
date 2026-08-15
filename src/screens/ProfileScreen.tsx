@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Pressable, Text, View } from 'react-native';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -9,6 +9,8 @@ import { Card } from '../components/Card';
 import { AppButton } from '../components/AppButton';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuthStore } from '../store/authStore';
+import { useNightsStore } from '../store/nightsStore';
+import { exportNightsReport } from '../reports/nightsReport';
 import type { MainTabParamList, RootStackParamList } from '../types/navigation';
 
 type Props = CompositeScreenProps<
@@ -16,15 +18,40 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
-const OPTIONS = [
-  { label: 'Exportar relatório', hint: 'Gera um PDF com o histórico para levar ao médico' },
-  { label: 'Política de privacidade', hint: 'Como seus dados são usados e armazenados' },
-  { label: 'Permissões do microfone', hint: 'Necessário para a captura de áudio noturna' },
+type OptionKey = 'export' | 'privacy' | 'permissions';
+
+const OPTIONS: { key: OptionKey; label: string; hint: string }[] = [
+  { key: 'export', label: 'Exportar relatório', hint: 'Gera um PDF com o histórico para levar ao médico' },
+  { key: 'privacy', label: 'Política de privacidade', hint: 'Como seus dados são usados e armazenados' },
+  { key: 'permissions', label: 'Permissões do microfone', hint: 'Necessário para a captura de áudio noturna' },
 ];
 
 export function ProfileScreen({ navigation }: Props) {
   const { colors, spacing, typography } = useTheme();
   const { email, logout } = useAuthStore();
+  const nights = useNightsStore((s) => s.nights);
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExport() {
+    if (nights.length === 0) {
+      Alert.alert('Nada para exportar', 'Grave pelo menos uma noite antes de exportar o relatório.');
+      return;
+    }
+    setExporting(true);
+    try {
+      await exportNightsReport(nights, email ?? '');
+    } catch (err) {
+      Alert.alert('Erro ao exportar', err instanceof Error ? err.message : 'Tente novamente.');
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  function handlePress(key: OptionKey) {
+    if (key === 'export') return handleExport();
+    if (key === 'privacy') return navigation.navigate('PrivacyPolicy');
+    if (key === 'permissions') return navigation.navigate('MicrophonePermission');
+  }
 
   return (
     <ScreenContainer>
@@ -33,15 +60,17 @@ export function ProfileScreen({ navigation }: Props) {
       <Card>
         <Text style={[typography.subtitle, { color: colors.primaryInk }]}>Conta</Text>
         <Text style={[typography.body, { color: colors.secondaryInk }]}>
-          {email ?? 'Não autenticado'} · Plano gratuito · Dados salvos só em memória no servidor
+          {email ?? 'Não autenticado'} · Plano gratuito · Dados salvos no servidor local (SQLite)
         </Text>
       </Card>
 
       <View style={{ gap: spacing.sm }}>
         {OPTIONS.map((opt) => (
-          <Pressable key={opt.label}>
+          <Pressable key={opt.key} onPress={() => handlePress(opt.key)} disabled={opt.key === 'export' && exporting}>
             <Card>
-              <Text style={[typography.subtitle, { color: colors.primaryInk }]}>{opt.label}</Text>
+              <Text style={[typography.subtitle, { color: colors.primaryInk }]}>
+                {opt.key === 'export' && exporting ? 'Gerando relatório...' : opt.label}
+              </Text>
               <Text style={[typography.caption, { color: colors.mutedInk }]}>{opt.hint}</Text>
             </Card>
           </Pressable>

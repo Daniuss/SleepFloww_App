@@ -11,6 +11,8 @@ export type RootStackParamList = {
   Login: undefined;
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   SleepSession: undefined;
+  PrivacyPolicy: undefined;
+  MicrophonePermission: undefined;
 };
 
 declare global {
