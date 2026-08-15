@@ -1,36 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
+const db = require('./db');
 
 const PORT = process.env.PORT || 4000;
 
-// Tudo em memória — sem banco de dados. Reinicia o servidor, perde os dados.
-const users = new Map(); // email -> { password }
-const sessions = new Map(); // token -> email
-const nightsByUser = new Map(); // email -> Night[]
-const recordsByUser = new Map(); // email -> ManualRecord[]
-
-const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-
-function seedNights() {
-  const nights = [];
-  const today = new Date();
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-    const eventsCount = Math.floor(Math.random() * 12) + 1;
-    nights.push({
-      id: crypto.randomUUID(),
-      date: date.toISOString().slice(0, 10),
-      weekdayLabel: WEEKDAY_LABELS[date.getDay()],
-      eventsCount,
-      snoreMinutes: Math.floor(Math.random() * 50) + 5,
-      sleepDurationHours: Math.round((Math.random() * 2.5 + 5.5) * 10) / 10,
-      severity: eventsCount <= 4 ? 'baixo' : eventsCount <= 8 ? 'moderado' : 'alto',
-    });
-  }
-  return nights;
-}
+// Sessões continuam em memória (token -> email): se o servidor reiniciar,
+// todos precisam logar de novo, mas os dados (users/nights/records) persistem
+// no SQLite (sleepflow.db).
+const sessions = new Map();
 
 const app = express();
 app.use(cors());
@@ -58,15 +36,13 @@ app.post('/auth/login', (req, res) => {
     return res.status(400).json({ error: 'E-mail (4+ caracteres) e senha (4+ caracteres) são obrigatórios' });
   }
 
-  const existing = users.get(email);
+  const existing = db.getUser(email);
   if (existing) {
     if (existing.password !== password) {
       return res.status(401).json({ error: 'Senha incorreta' });
     }
   } else {
-    users.set(email, { password });
-    nightsByUser.set(email, seedNights());
-    recordsByUser.set(email, []);
+    db.createUser(email, password);
   }
 
   const token = crypto.randomUUID();
@@ -75,19 +51,45 @@ app.post('/auth/login', (req, res) => {
 });
 
 app.get('/nights', requireAuth, (req, res) => {
-  res.json(nightsByUser.get(req.email) || []);
+  res.json(db.listNights(req.email));
+});
+
+app.post('/nights', requireAuth, (req, res) => {
+  const { date, weekdayLabel, eventsCount, snoreMinutes, sleepDurationHours, severity } = req.body || {};
+
+  if (
+    typeof date !== 'string' ||
+    typeof weekdayLabel !== 'string' ||
+    typeof eventsCount !== 'number' ||
+    typeof snoreMinutes !== 'number' ||
+    typeof sleepDurationHours !== 'number' ||
+    typeof severity !== 'string'
+  ) {
+    return res.status(400).json({ error: 'Resumo da noite incompleto' });
+  }
+
+  const night = {
+    id: crypto.randomUUID(),
+    date,
+    weekdayLabel,
+    eventsCount,
+    snoreMinutes,
+    sleepDurationHours,
+    severity,
+  };
+  db.insertNight(req.email, night);
+  res.status(201).json(night);
 });
 
 app.post('/records', requireAuth, (req, res) => {
-  const record = { ...req.body, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
-  const list = recordsByUser.get(req.email) || [];
-  list.push(record);
-  recordsByUser.set(req.email, list);
-  res.status(201).json(record);
+  const id = crypto.randomUUID();
+  const createdAt = new Date().toISOString();
+  db.insertRecord(req.email, id, createdAt, req.body || {});
+  res.status(201).json({ ...req.body, id, createdAt });
 });
 
 app.get('/records', requireAuth, (req, res) => {
-  res.json(recordsByUser.get(req.email) || []);
+  res.json(db.listRecords(req.email));
 });
 
 app.listen(PORT, '0.0.0.0', () => {

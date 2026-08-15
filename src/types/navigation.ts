@@ -10,6 +10,7 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   Login: undefined;
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
+  SleepSession: undefined;
 };
 
 declare global {

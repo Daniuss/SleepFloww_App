@@ -9,21 +9,43 @@ import { AppButton } from '../components/AppButton';
 import { useTheme } from '../theme/ThemeProvider';
 import { severityLabel } from '../data/mockNights';
 import { useNightsStore } from '../store/nightsStore';
+import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import type { MainTabParamList } from '../types/navigation';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { MainTabParamList, RootStackParamList } from '../types/navigation';
 
-type Props = BottomTabScreenProps<MainTabParamList, 'Home'>;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<MainTabParamList, 'Home'>,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 export function HomeScreen({ navigation }: Props) {
   const { colors, spacing, typography } = useTheme();
   const { nights, loading, error } = useNightsStore();
 
-  if (loading || nights.length === 0) {
+  if (loading) {
     return (
       <ScreenContainer>
         <Text style={[typography.body, { color: colors.secondaryInk }]}>
           {error ? error : 'Carregando dados da noite...'}
         </Text>
+      </ScreenContainer>
+    );
+  }
+
+  if (nights.length === 0) {
+    return (
+      <ScreenContainer>
+        <SectionTitle>Resumo da noite</SectionTitle>
+        <Card>
+          <Text style={[typography.body, { color: colors.secondaryInk }]}>
+            {error ?? 'Nenhuma noite gravada ainda.'}
+          </Text>
+          <AppButton
+            label="Iniciar gravação da noite"
+            onPress={() => navigation.navigate('SleepSession')}
+          />
+        </Card>
       </ScreenContainer>
     );
   }
@@ -57,6 +79,12 @@ export function HomeScreen({ navigation }: Props) {
         <StatTile label="Duração do sono" value={`${lastNight.sleepDurationHours.toFixed(1)}h`} />
         <StatTile label="Minutos de ronco" value={`${lastNight.snoreMinutes} min`} />
       </View>
+
+      <AppButton
+        label="Iniciar gravação da noite"
+        variant="secondary"
+        onPress={() => navigation.navigate('SleepSession')}
+      />
 
       <Card>
         <SectionSubtitle>Registro manual de hoje</SectionSubtitle>

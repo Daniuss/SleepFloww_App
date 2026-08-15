@@ -33,6 +33,14 @@ export function fetchNights(token: string) {
   });
 }
 
+export function createNight(night: Omit<Night, 'id'>, token: string) {
+  return request<Night>('/nights', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(night),
+  });
+}
+
 export function submitRecord(record: ManualRecord, token: string) {
   return request<ManualRecord>('/records', {
     method: 'POST',

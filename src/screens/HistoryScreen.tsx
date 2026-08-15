@@ -13,12 +13,23 @@ export function HistoryScreen() {
   const { colors, spacing, typography } = useTheme();
   const { nights, loading, error } = useNightsStore();
 
-  if (loading || nights.length === 0) {
+  if (loading) {
     return (
       <ScreenContainer>
         <SectionTitle>Histórico</SectionTitle>
         <Text style={[typography.body, { color: colors.secondaryInk }]}>
           {error ? error : 'Carregando histórico...'}
+        </Text>
+      </ScreenContainer>
+    );
+  }
+
+  if (nights.length === 0) {
+    return (
+      <ScreenContainer>
+        <SectionTitle>Histórico</SectionTitle>
+        <Text style={[typography.body, { color: colors.secondaryInk }]}>
+          Nenhuma noite gravada ainda. Grave uma noite na tela inicial para começar o histórico.
         </Text>
       </ScreenContainer>
     );
