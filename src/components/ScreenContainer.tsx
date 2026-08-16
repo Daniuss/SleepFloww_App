@@ -7,16 +7,17 @@ type Props = {
   children: React.ReactNode;
   scroll?: boolean;
   style?: ViewStyle;
+  backgroundColor?: string;
 };
 
-export function ScreenContainer({ children, scroll = true, style }: Props) {
+export function ScreenContainer({ children, scroll = true, style, backgroundColor }: Props) {
   const { colors, spacing } = useTheme();
   const content = (
     <View style={[{ padding: spacing.md, gap: spacing.md }, style]}>{children}</View>
   );
 
   return (
-    <SafeAreaView style={[styles.flex, { backgroundColor: colors.page }]} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.flex, { backgroundColor: backgroundColor ?? colors.page }]} edges={['top', 'left', 'right']}>
       {scroll ? (
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {content}

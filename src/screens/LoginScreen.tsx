@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types/navigation';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -16,7 +16,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 // Autentica contra o backend (server/). Primeiro login com um e-mail novo
 // cria a conta automaticamente — ainda não existe tela de cadastro separada.
 export function LoginScreen({ navigation }: Props) {
-  const { colors, spacing, typography } = useTheme();
+  const { colors, spacing, radius, typography, isDark } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -43,15 +43,52 @@ export function LoginScreen({ navigation }: Props) {
   }
 
   return (
-    <ScreenContainer scroll={false} style={{ flex: 1, justifyContent: 'center', gap: spacing.lg }}>
-      <View style={{ gap: spacing.xs }}>
-        <Text style={[typography.hero, { color: colors.primaryInk }]}>SleepFlow</Text>
-        <Text style={[typography.body, { color: colors.secondaryInk }]}>
+    <ScreenContainer
+      scroll={false}
+      backgroundColor={isDark ? colors.page : '#eef1fb'}
+      style={{ flex: 1, justifyContent: 'center', gap: spacing.xl }}
+    >
+      <View style={{ alignItems: 'center', gap: spacing.sm }}>
+        <View
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: radius.lg,
+            backgroundColor: colors.brand,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 30 }}>🌙</Text>
+        </View>
+        <Text style={[typography.title, { color: colors.primaryInk }]}>SleepFlow</Text>
+        <Text style={[typography.body, { color: colors.secondaryInk, textAlign: 'center' }]}>
           Acompanhe seus padrões respiratórios durante o sono.
         </Text>
       </View>
 
-      <View style={{ gap: spacing.md }}>
+      <View
+        style={{
+          backgroundColor: colors.card,
+          borderRadius: radius.lg,
+          padding: spacing.lg,
+          gap: spacing.md,
+          borderWidth: isDark ? 1 : 0,
+          borderColor: colors.border,
+          ...Platform.select({
+            ios: {
+              shadowColor: '#0b0b0b',
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: isDark ? 0 : 0.08,
+              shadowRadius: 24,
+            },
+            android: { elevation: isDark ? 0 : 3 },
+            default: {},
+          }),
+        }}
+      >
+        <Text style={[typography.subtitle, { color: colors.primaryInk }]}>Entrar na sua conta</Text>
+
         <FormField
           label="E-mail"
           placeholder="voce@email.com"
@@ -67,20 +104,19 @@ export function LoginScreen({ navigation }: Props) {
           value={password}
           onChangeText={setPassword}
         />
+
+        {error && (
+          <Text style={[typography.caption, { color: colors.critical }]}>{error}</Text>
+        )}
+
+        <AppButton
+          label="Entrar"
+          disabled={!canSubmit}
+          loading={loading}
+          onPress={handleSubmit}
+        />
       </View>
 
-      {error && (
-        <Text style={[typography.caption, { color: colors.critical, textAlign: 'center' }]}>
-          {error}
-        </Text>
-      )}
-
-      <AppButton
-        label="Entrar"
-        disabled={!canSubmit}
-        loading={loading}
-        onPress={handleSubmit}
-      />
       <Text style={[typography.caption, { color: colors.mutedInk, textAlign: 'center' }]}>
         Este app não diagnostica apneia nem substitui avaliação médica.
       </Text>
