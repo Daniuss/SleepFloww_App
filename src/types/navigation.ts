@@ -9,6 +9,7 @@ export type MainTabParamList = {
 
 export type RootStackParamList = {
   Login: undefined;
+  SignUp: undefined;
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   SleepSession: undefined;
   PrivacyPolicy: undefined;

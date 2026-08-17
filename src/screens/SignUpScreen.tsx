@@ -6,39 +6,53 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { FormField } from '../components/FormField';
 import { AppButton } from '../components/AppButton';
 import { useTheme } from '../theme/ThemeProvider';
-import { signIn } from '../api/supabaseAuth';
+import { signUp } from '../api/supabaseAuth';
 import { useAuthStore } from '../store/authStore';
 import { useNightsStore } from '../store/nightsStore';
 import { useRecordsStore } from '../store/recordsStore';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'SignUp'>;
 
-// Autentica via Supabase Auth. Só faz login — não cria conta aqui (ver
-// SignUpScreen para o cadastro).
-export function LoginScreen({ navigation }: Props) {
+export function SignUpScreen({ navigation }: Props) {
   const { colors, spacing, radius, typography, isDark } = useTheme();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const setSession = useAuthStore((s) => s.setSession);
   const fetchNights = useNightsStore((s) => s.fetchNights);
   const fetchRecords = useRecordsStore((s) => s.fetchRecords);
 
-  const canSubmit = email.trim().length > 3 && password.length > 0;
+  const canSubmit =
+    name.trim().length > 0 &&
+    email.trim().length > 3 &&
+    password.length >= 6 &&
+    confirmPassword.length >= 6;
 
   async function handleSubmit() {
     setError(null);
+
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const { session } = await signIn(email.trim(), password);
+      const { session } = await signUp(email.trim(), password, name.trim());
       setSession(session);
-      if (session) {
-        await Promise.all([fetchNights(session.user.id), fetchRecords(session.user.id)]);
+      if (!session) {
+        // Não deveria acontecer com "Confirm email" desativado no Supabase,
+        // mas cobrimos o caso mesmo assim.
+        setError('Conta criada. Confirme seu e-mail antes de entrar.');
+        return;
       }
+      await Promise.all([fetchNights(session.user.id), fetchRecords(session.user.id)]);
       navigation.replace('Main');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao entrar');
+      setError(err instanceof Error ? err.message : 'Erro ao criar conta');
     } finally {
       setLoading(false);
     }
@@ -46,7 +60,7 @@ export function LoginScreen({ navigation }: Props) {
 
   return (
     <ScreenContainer
-      scroll={false}
+      scroll
       backgroundColor={isDark ? colors.page : '#eef1fb'}
       style={{ flex: 1, justifyContent: 'center', gap: spacing.xl }}
     >
@@ -89,8 +103,9 @@ export function LoginScreen({ navigation }: Props) {
           }),
         }}
       >
-        <Text style={[typography.subtitle, { color: colors.primaryInk }]}>Entrar na sua conta</Text>
+        <Text style={[typography.subtitle, { color: colors.primaryInk }]}>Criar sua conta</Text>
 
+        <FormField label="Nome" placeholder="Seu nome" value={name} onChangeText={setName} />
         <FormField
           label="E-mail"
           placeholder="voce@email.com"
@@ -106,22 +121,29 @@ export function LoginScreen({ navigation }: Props) {
           value={password}
           onChangeText={setPassword}
         />
+        <FormField
+          label="Confirmar senha"
+          placeholder="********"
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
 
         {error && (
           <Text style={[typography.caption, { color: colors.critical }]}>{error}</Text>
         )}
 
         <AppButton
-          label="Entrar"
+          label="Criar conta"
           disabled={!canSubmit}
           loading={loading}
           onPress={handleSubmit}
         />
 
-        <Pressable onPress={() => navigation.navigate('SignUp')} hitSlop={8}>
+        <Pressable onPress={() => navigation.navigate('Login')} hitSlop={8}>
           <Text style={[typography.caption, { color: colors.secondaryInk, textAlign: 'center' }]}>
-            Não possui uma conta?{' '}
-            <Text style={{ color: colors.brand, fontWeight: '600' }}>Criar conta</Text>
+            Já possui uma conta?{' '}
+            <Text style={{ color: colors.brand, fontWeight: '600' }}>Entrar</Text>
           </Text>
         </Pressable>
       </View>

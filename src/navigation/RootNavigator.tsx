@@ -2,6 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types/navigation';
 import { LoginScreen } from '../screens/LoginScreen';
+import { SignUpScreen } from '../screens/SignUpScreen';
 import { SleepSessionScreen } from '../screens/SleepSessionScreen';
 import { PrivacyPolicyScreen } from '../screens/PrivacyPolicyScreen';
 import { MicrophonePermissionScreen } from '../screens/MicrophonePermissionScreen';
@@ -25,6 +26,7 @@ export function RootNavigator() {
       initialRouteName={session ? 'Main' : 'Login'}
     >
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="SignUp" component={SignUpScreen} />
       <Stack.Screen name="Main" component={MainTabs} />
       <Stack.Screen name="SleepSession" component={SleepSessionScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
