@@ -38,7 +38,7 @@ export function RecordScreen() {
     <ScreenContainer>
       <SectionTitle>Registro manual</SectionTitle>
       <Text style={[typography.body, { color: colors.secondaryInk }]}>
-        Esses dados são enviados para o servidor, mas ficam só em memória por enquanto (sem banco de dados — reiniciar o servidor apaga tudo).
+        Esses dados ficam salvos na sua conta e continuam disponíveis da próxima vez que você entrar.
       </Text>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>

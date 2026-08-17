@@ -35,6 +35,7 @@ export function FormField({ label, style, onFocus, onBlur, ...inputProps }: Prop
           setIsFocused(false);
           onBlur?.(e);
         }}
+        accessibilityLabel={label}
         {...inputProps}
       />
     </View>

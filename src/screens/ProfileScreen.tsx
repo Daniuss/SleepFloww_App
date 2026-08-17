@@ -61,13 +61,20 @@ export function ProfileScreen({ navigation }: Props) {
       <Card>
         <Text style={[typography.subtitle, { color: colors.primaryInk }]}>Conta</Text>
         <Text style={[typography.body, { color: colors.secondaryInk }]}>
-          {user?.email ?? 'Não autenticado'} · Plano gratuito · Dados salvos no servidor local (SQLite)
+          {user?.email ?? 'Não autenticado'} · Plano gratuito · Dados salvos na nuvem (Supabase)
         </Text>
       </Card>
 
       <View style={{ gap: spacing.sm }}>
         {OPTIONS.map((opt) => (
-          <Pressable key={opt.key} onPress={() => handlePress(opt.key)} disabled={opt.key === 'export' && exporting}>
+          <Pressable
+            key={opt.key}
+            onPress={() => handlePress(opt.key)}
+            disabled={opt.key === 'export' && exporting}
+            accessibilityRole="button"
+            accessibilityLabel={opt.label}
+            accessibilityHint={opt.hint}
+          >
             <Card>
               <Text style={[typography.subtitle, { color: colors.primaryInk }]}>
                 {opt.key === 'export' && exporting ? 'Gerando relatório...' : opt.label}

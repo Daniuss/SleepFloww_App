@@ -66,6 +66,8 @@ export function SignUpScreen({ navigation }: Props) {
     >
       <View style={{ alignItems: 'center', gap: spacing.sm }}>
         <View
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
           style={{
             width: 64,
             height: 64,

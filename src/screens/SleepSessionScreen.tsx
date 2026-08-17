@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Alert, Platform, Text } from 'react-native';
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -18,6 +18,7 @@ import { useAuthStore } from '../store/authStore';
 import { useNightsStore } from '../store/nightsStore';
 import { createNight } from '../api/supabaseData';
 import { analyzeNight, type MeteringSample } from '../audio/snoreDetector';
+import { WebAudioMeter } from '../audio/webMetering';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SleepSession'>;
 
@@ -40,6 +41,7 @@ export function SleepSessionScreen({ navigation }: Props) {
 
   const samplesRef = useRef<MeteringSample[]>([]);
   const startedAtRef = useRef<Date | null>(null);
+  const webMeterRef = useRef<WebAudioMeter | null>(null);
 
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
   const recorderState = useAudioRecorderState(recorder, 1000);
@@ -67,10 +69,37 @@ export function SleepSessionScreen({ navigation }: Props) {
     startedAtRef.current = new Date();
     await recorder.prepareToRecordAsync();
     recorder.record();
+
+    // expo-audio não mede nível de áudio na Web (RecorderState.metering
+    // nunca vem preenchido lá) — só no Android/iOS. Na Web, medimos o volume
+    // por conta própria via Web Audio API, em paralelo à gravação.
+    if (Platform.OS === 'web') {
+      const meter = new WebAudioMeter();
+      webMeterRef.current = meter;
+      try {
+        await meter.start((sample) => samplesRef.current.push(sample));
+      } catch {
+        // Sem o segundo acesso ao microfone a heurística fica sem dados,
+        // mas a gravação em si (expo-audio) já está rodando normalmente.
+        webMeterRef.current = null;
+      }
+    }
   }
 
   async function handleStop() {
-    await recorder.stop();
+    try {
+      await recorder.stop();
+    } catch (err) {
+      Alert.alert(
+        'Erro ao parar a gravação',
+        err instanceof Error ? err.message : 'Não foi possível finalizar a gravação. Tente novamente.'
+      );
+      return;
+    } finally {
+      webMeterRef.current?.stop();
+      webMeterRef.current = null;
+    }
+
     const startedAt = startedAtRef.current;
     if (!startedAt) return;
 
@@ -104,7 +133,9 @@ export function SleepSessionScreen({ navigation }: Props) {
       <Card>
         <Text style={[typography.body, { color: colors.secondaryInk }]}>
           {recorderState.isRecording
-            ? 'Gravando... pode apagar a tela, a gravação continua em segundo plano.'
+            ? Platform.OS === 'web'
+              ? 'Gravando... mantenha esta aba aberta e em primeiro plano. No navegador, trocar de aba ou bloquear a tela interrompe a gravação.'
+              : 'Gravando... pode apagar a tela, a gravação continua em segundo plano.'
             : 'Deixe o celular perto da cama e inicie a gravação antes de dormir.'}
         </Text>
         {recorderState.isRecording && (
