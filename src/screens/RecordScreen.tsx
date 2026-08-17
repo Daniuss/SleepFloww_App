@@ -10,7 +10,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useRecordStore } from '../store/recordStore';
 import { useAuthStore } from '../store/authStore';
 import { useRecordsStore } from '../store/recordsStore';
-import { submitRecord } from '../api/client';
+import { submitRecord } from '../api/supabaseData';
 import { PARTNER_OBSERVATIONS, SLEEP_POSITIONS, SYMPTOMS } from '../data/recordLabels';
 
 const SECTIONS = ['Sintomas', 'Parceiro(a)', 'Hábitos', 'CPAP'] as const;
@@ -30,7 +30,7 @@ export function RecordScreen() {
     setNotes,
     reset,
   } = useRecordStore();
-  const token = useAuthStore((s) => s.token);
+  const userId = useAuthStore((s) => s.user?.id);
   const fetchRecords = useRecordsStore((s) => s.fetchRecords);
   const [saving, setSaving] = useState(false);
 
@@ -138,14 +138,14 @@ export function RecordScreen() {
         label="Salvar registro"
         loading={saving}
         onPress={async () => {
-          if (!token) {
+          if (!userId) {
             Alert.alert('Sessão expirada', 'Faça login novamente.');
             return;
           }
           setSaving(true);
           try {
-            await submitRecord(draft, token);
-            await fetchRecords(token);
+            await submitRecord(draft, userId);
+            await fetchRecords(userId);
             Alert.alert('Registro salvo', 'Seus dados foram enviados para o servidor.');
             reset();
           } catch (err) {

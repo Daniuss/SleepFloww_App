@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { supabase } from './src/api/supabaseClient';
+import { useAuthStore } from './src/store/authStore';
 import './src/types/navigation';
 
 function Navigation() {
@@ -16,6 +19,22 @@ function Navigation() {
 }
 
 export default function App() {
+  const setSession = useAuthStore((s) => s.setSession);
+  const setInitializing = useAuthStore((s) => s.setInitializing);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setInitializing(false);
+    });
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.subscription.unsubscribe();
+  }, [setSession, setInitializing]);
+
   return (
     <SafeAreaProvider>
       <ThemeProvider>

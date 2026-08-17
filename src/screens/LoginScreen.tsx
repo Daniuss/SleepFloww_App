@@ -6,15 +6,15 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { FormField } from '../components/FormField';
 import { AppButton } from '../components/AppButton';
 import { useTheme } from '../theme/ThemeProvider';
-import { login } from '../api/client';
+import { signInOrSignUp } from '../api/supabaseAuth';
 import { useAuthStore } from '../store/authStore';
 import { useNightsStore } from '../store/nightsStore';
 import { useRecordsStore } from '../store/recordsStore';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
-// Autentica contra o backend (server/). Primeiro login com um e-mail novo
-// cria a conta automaticamente — ainda não existe tela de cadastro separada.
+// Autentica via Supabase Auth. Primeiro login com um e-mail novo cria a
+// conta automaticamente — ainda não existe tela de cadastro separada.
 export function LoginScreen({ navigation }: Props) {
   const { colors, spacing, radius, typography, isDark } = useTheme();
   const [email, setEmail] = useState('');
@@ -25,15 +25,22 @@ export function LoginScreen({ navigation }: Props) {
   const fetchNights = useNightsStore((s) => s.fetchNights);
   const fetchRecords = useRecordsStore((s) => s.fetchRecords);
 
-  const canSubmit = email.trim().length > 3 && password.length >= 4;
+  // 6 caracteres é o mínimo padrão do Supabase Auth (antes era 4, do backend próprio).
+  const canSubmit = email.trim().length > 3 && password.length >= 6;
 
   async function handleSubmit() {
     setError(null);
     setLoading(true);
     try {
-      const { token, email: sessionEmail } = await login(email.trim(), password);
-      setSession(token, sessionEmail);
-      await Promise.all([fetchNights(token), fetchRecords(token)]);
+      const { session } = await signInOrSignUp(email.trim(), password);
+      setSession(session);
+      if (!session) {
+        // Conta criada mas aguardando confirmação de e-mail (config. do
+        // projeto Supabase) — sem sessão não dá pra ler/gravar dados ainda.
+        setError('Conta criada. Confirme seu e-mail antes de entrar.');
+        return;
+      }
+      await Promise.all([fetchNights(session.user.id), fetchRecords(session.user.id)]);
       navigation.replace('Main');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao entrar');

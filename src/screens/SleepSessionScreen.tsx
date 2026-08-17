@@ -16,7 +16,7 @@ import { AppButton } from '../components/AppButton';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuthStore } from '../store/authStore';
 import { useNightsStore } from '../store/nightsStore';
-import { createNight } from '../api/client';
+import { createNight } from '../api/supabaseData';
 import { analyzeNight, type MeteringSample } from '../audio/snoreDetector';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SleepSession'>;
@@ -34,7 +34,7 @@ function formatElapsed(durationMillis: number) {
 
 export function SleepSessionScreen({ navigation }: Props) {
   const { colors, spacing, typography } = useTheme();
-  const token = useAuthStore((s) => s.token);
+  const userId = useAuthStore((s) => s.user?.id);
   const fetchNights = useNightsStore((s) => s.fetchNights);
   const [saving, setSaving] = useState(false);
 
@@ -76,15 +76,15 @@ export function SleepSessionScreen({ navigation }: Props) {
 
     const summary = analyzeNight(samplesRef.current, startedAt);
 
-    if (!token) {
+    if (!userId) {
       Alert.alert('Sessão expirada', 'Faça login novamente.');
       return;
     }
 
     setSaving(true);
     try {
-      await createNight(summary, token);
-      await fetchNights(token);
+      await createNight(summary, userId);
+      await fetchNights(userId);
       Alert.alert(
         'Noite salva',
         `${summary.eventsCount} eventos identificados, ${summary.snoreMinutes} min de ronco.`

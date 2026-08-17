@@ -11,6 +11,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useAuthStore } from '../store/authStore';
 import { useNightsStore } from '../store/nightsStore';
 import { exportNightsReport } from '../reports/nightsReport';
+import { signOut } from '../api/supabaseAuth';
 import type { MainTabParamList, RootStackParamList } from '../types/navigation';
 
 type Props = CompositeScreenProps<
@@ -28,7 +29,7 @@ const OPTIONS: { key: OptionKey; label: string; hint: string }[] = [
 
 export function ProfileScreen({ navigation }: Props) {
   const { colors, spacing, typography } = useTheme();
-  const { email, logout } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const nights = useNightsStore((s) => s.nights);
   const [exporting, setExporting] = useState(false);
 
@@ -39,7 +40,7 @@ export function ProfileScreen({ navigation }: Props) {
     }
     setExporting(true);
     try {
-      await exportNightsReport(nights, email ?? '');
+      await exportNightsReport(nights, user?.email ?? '');
     } catch (err) {
       Alert.alert('Erro ao exportar', err instanceof Error ? err.message : 'Tente novamente.');
     } finally {
@@ -60,7 +61,7 @@ export function ProfileScreen({ navigation }: Props) {
       <Card>
         <Text style={[typography.subtitle, { color: colors.primaryInk }]}>Conta</Text>
         <Text style={[typography.body, { color: colors.secondaryInk }]}>
-          {email ?? 'Não autenticado'} · Plano gratuito · Dados salvos no servidor local (SQLite)
+          {user?.email ?? 'Não autenticado'} · Plano gratuito · Dados salvos no servidor local (SQLite)
         </Text>
       </Card>
 
@@ -80,8 +81,8 @@ export function ProfileScreen({ navigation }: Props) {
       <AppButton
         label="Sair"
         variant="secondary"
-        onPress={() => {
-          logout();
+        onPress={async () => {
+          await signOut();
           navigation.replace('Login');
         }}
       />
