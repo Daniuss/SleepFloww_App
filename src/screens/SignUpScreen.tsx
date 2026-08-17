@@ -26,7 +26,7 @@ export function SignUpScreen({ navigation }: Props) {
   const fetchRecords = useRecordsStore((s) => s.fetchRecords);
 
   const canSubmit =
-    name.trim().length > 0 &&
+    name.trim().length >= 2 &&
     email.trim().length > 3 &&
     password.length >= 6 &&
     confirmPassword.length >= 6;
@@ -105,19 +105,28 @@ export function SignUpScreen({ navigation }: Props) {
       >
         <Text style={[typography.subtitle, { color: colors.primaryInk }]}>Criar sua conta</Text>
 
-        <FormField label="Nome" placeholder="Seu nome" value={name} onChangeText={setName} />
+        <FormField
+          label="Nome"
+          placeholder="Seu nome"
+          maxLength={80}
+          value={name}
+          onChangeText={setName}
+        />
         <FormField
           label="E-mail"
           placeholder="voce@email.com"
           autoCapitalize="none"
           keyboardType="email-address"
+          maxLength={254}
           value={email}
           onChangeText={setEmail}
         />
+        {/* 72 é o limite do bcrypt, usado pelo Supabase Auth pra hash de senha. */}
         <FormField
           label="Senha"
           placeholder="********"
           secureTextEntry
+          maxLength={72}
           value={password}
           onChangeText={setPassword}
         />
@@ -125,6 +134,7 @@ export function SignUpScreen({ navigation }: Props) {
           label="Confirmar senha"
           placeholder="********"
           secureTextEntry
+          maxLength={72}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
         />
