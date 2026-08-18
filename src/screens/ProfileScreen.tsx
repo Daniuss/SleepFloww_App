@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -7,6 +7,7 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { SectionTitle } from '../components/SectionTitle';
 import { Card } from '../components/Card';
 import { AppButton } from '../components/AppButton';
+import { AppAlert } from '../components/AppAlert';
 import { useTheme } from '../theme/ThemeProvider';
 import { useAuthStore } from '../store/authStore';
 import { useNightsStore } from '../store/nightsStore';
@@ -35,14 +36,14 @@ export function ProfileScreen({ navigation }: Props) {
 
   async function handleExport() {
     if (nights.length === 0) {
-      Alert.alert('Nada para exportar', 'Grave pelo menos uma noite antes de exportar o relatório.');
+      AppAlert.alert('Nada para exportar', 'Grave pelo menos uma noite antes de exportar o relatório.');
       return;
     }
     setExporting(true);
     try {
       await exportNightsReport(nights, user?.email ?? '');
     } catch (err) {
-      Alert.alert('Erro ao exportar', err instanceof Error ? err.message : 'Tente novamente.');
+      AppAlert.alert('Erro ao exportar', err instanceof Error ? err.message : 'Tente novamente.');
     } finally {
       setExporting(false);
     }

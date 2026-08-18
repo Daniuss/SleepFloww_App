@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { AppAlertHost } from './src/components/AppAlertHost';
 import { supabase } from './src/api/supabaseClient';
 import { useAuthStore } from './src/store/authStore';
 import './src/types/navigation';
@@ -39,6 +40,7 @@ export default function App() {
     <SafeAreaProvider>
       <ThemeProvider>
         <Navigation />
+        <AppAlertHost />
       </ThemeProvider>
     </SafeAreaProvider>
   );

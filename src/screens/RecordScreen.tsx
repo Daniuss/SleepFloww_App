@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { SectionTitle } from '../components/SectionTitle';
 import { Card } from '../components/Card';
 import { Chip } from '../components/Chip';
 import { FormField } from '../components/FormField';
 import { AppButton } from '../components/AppButton';
+import { AppAlert } from '../components/AppAlert';
 import { useTheme } from '../theme/ThemeProvider';
 import { useRecordStore } from '../store/recordStore';
 import { useAuthStore } from '../store/authStore';
@@ -139,17 +140,17 @@ export function RecordScreen() {
         loading={saving}
         onPress={async () => {
           if (!userId) {
-            Alert.alert('Sessão expirada', 'Faça login novamente.');
+            AppAlert.alert('Sessão expirada', 'Faça login novamente.');
             return;
           }
           setSaving(true);
           try {
             await submitRecord(draft, userId);
             await fetchRecords(userId);
-            Alert.alert('Registro salvo', 'Seus dados foram enviados para o servidor.');
+            AppAlert.alert('Registro salvo', 'Seus dados foram enviados para o servidor.');
             reset();
           } catch (err) {
-            Alert.alert('Erro ao salvar', err instanceof Error ? err.message : 'Tente novamente.');
+            AppAlert.alert('Erro ao salvar', err instanceof Error ? err.message : 'Tente novamente.');
           } finally {
             setSaving(false);
           }

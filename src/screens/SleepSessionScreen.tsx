@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Platform, Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -19,6 +19,7 @@ import { useNightsStore } from '../store/nightsStore';
 import { createNight } from '../api/supabaseData';
 import { analyzeNight, type MeteringSample } from '../audio/snoreDetector';
 import { WebAudioMeter } from '../audio/webMetering';
+import { AppAlert } from '../components/AppAlert';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SleepSession'>;
 
@@ -55,7 +56,7 @@ export function SleepSessionScreen({ navigation }: Props) {
   async function handleStart() {
     const permission = await requestRecordingPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permissão necessária', 'Autorize o uso do microfone para gravar a noite.');
+      AppAlert.alert('Permissão necessária', 'Autorize o uso do microfone para gravar a noite.');
       return;
     }
 
@@ -90,7 +91,7 @@ export function SleepSessionScreen({ navigation }: Props) {
     try {
       await recorder.stop();
     } catch (err) {
-      Alert.alert(
+      AppAlert.alert(
         'Erro ao parar a gravação',
         err instanceof Error ? err.message : 'Não foi possível finalizar a gravação. Tente novamente.'
       );
@@ -106,7 +107,7 @@ export function SleepSessionScreen({ navigation }: Props) {
     const summary = analyzeNight(samplesRef.current, startedAt);
 
     if (!userId) {
-      Alert.alert('Sessão expirada', 'Faça login novamente.');
+      AppAlert.alert('Sessão expirada', 'Faça login novamente.');
       return;
     }
 
@@ -114,13 +115,13 @@ export function SleepSessionScreen({ navigation }: Props) {
     try {
       await createNight(summary, userId);
       await fetchNights(userId);
-      Alert.alert(
+      AppAlert.alert(
         'Noite salva',
         `${summary.eventsCount} eventos identificados, ${summary.snoreMinutes} min de ronco.`
       );
       navigation.goBack();
     } catch (err) {
-      Alert.alert('Erro ao salvar', err instanceof Error ? err.message : 'Tente novamente.');
+      AppAlert.alert('Erro ao salvar', err instanceof Error ? err.message : 'Tente novamente.');
     } finally {
       setSaving(false);
     }
